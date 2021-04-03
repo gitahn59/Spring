@@ -13,35 +13,35 @@ fun getUser(@RequestBody user : User) = user
 파라미터로 전달해준다.
 
 ## 내부 동작
-앤드포인트로 요청이 들어오면 boot는 미리 등록되어있는 resolver들을 가져와
-그 요청을 지원하는 resolver를 탐색한다. 
+앤드포인트로 요청이 들어오면 미리 등록되어있는 resolver를 가져와 그 요청을 지원하는 resolver 가 있는지 확인한다.  
 
 ```java
 
 public class RequestResponseBodyMethodProcessor extends AbstractMessageConverterMethodProcessor {
-...
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
         return parameter.hasParameterAnnotation(RequestBody.class);
     }
-...
 }
 ```
 
-예제 1과 같은 경우 RequestResponseBodyMethodProcessor가 parameter가 RequestBody 어노테이션을 가지고 있는지 확인하고,   
-boolean 값을 리턴해서 처리 가능여부를 확인한다.
-user에는 @RequestBody가 설정되어있고,   
-HttpRequest body에 포함된 json 값을 파싱(Jackson을 사용해서)해서 User 오브젝트를 생성해서 handler로 전달해준다.       
+예제 1과 같은 경우 RequestResponseBodyMethodProcessor 는 parameter 가 RequestBody 애노테이션을 
+가지고 있는지 확인하고 그 결과에 따라 boolean 값을 리턴해서 처리 가능 여부를 알려준다.    
+
+user에는 @RequestBody가 설정되어 있으므로, HttpRequest body에 포함된     
+json 값을 파싱(Jackson을 사용해서)해서 User 오브젝트를 생성해서 handler로 전달해준다.       
 
 ## 사용자 정의 리졸버
-HandlerMathodArgumentResolver 인터페이스를 구현하면 Custom Resolver를 만들 수 있다.    
+HandlerMethodArgumentResolver 인터페이스를 구현하면 Custom Resolver를 만들 수 있다.    
 
 ```java
 public interface HandlerMethodArgumentResolver {
-	boolean supportsParameter(MethodParameter parameter);
-	@Nullable
-	Object resolveArgument(MethodParameter parameter, @Nullable ModelAndViewContainer mavContainer,
-			NativeWebRequest webRequest, @Nullable WebDataBinderFactory binderFactory) throws Exception;
+    boolean supportsParameter(MethodParameter parameter);
+
+    @Nullable
+    Object resolveArgument(MethodParameter parameter, @Nullable ModelAndViewContainer mavContainer,
+                           NativeWebRequest webRequest, @Nullable WebDataBinderFactory binderFactory) throws Exception;
+}
 ```
 
 ### User Class를 매핑해주는 Custom Resolver 제작
@@ -66,16 +66,17 @@ class UserHandlerMethodArgumentResolver : HandlerMethodArgumentResolver{
 }
 ```
 
-User 클래스를 처리하는 CustomResolver는 위의 예제처럼 HandlerMethodArgumentResolver를 구현하면 손쉽게 만들 수 있다.
+User 클래스를 처리하는 CustomResolver 는 위의 예제처럼 HandlerMethodArgumentResolver를 구현하면 손쉽게 만들 수 있다.   
 Handler 메소드의 파라미터에 UserBody가 붙어있으면,   
-직접 구현한 UserHandlerMethodArgumentResolver가 post 요청을 파싱해서 User 오브젝트를 생성해서 파라미터에 전달해준다.
+직접 구현한 UserHandlerMethodArgumentResolver 가 post 요청을 파싱해서 User 오브젝트를 생성해서 파라미터에 전달해준다.
 
-이렇게 구현한 Resolver는 Boot 에 등록해야 동작한다.
-부트 설정에 등록하기 위해서는 Resolver가 빈으로 등록되어있어야 하므로 @Component를 붙여준다.
+이렇게 구현한 Resolver 는 컨텍스트에 등록해야 동작한다.
+컨텍스트에 등록하려면 Resolver 가 빈으로 등록되어있어야 하므로 @Component를 붙여준다.
 
 ### Resolver 등록
 
 이렇게 생성된 Resolver는 WebMvcConfigurer에 등록하여 사용할 수 있다.
+
 ```kotlin
 @Configuration
 class WebConfig : WebMvcConfigurer{
